@@ -2,6 +2,45 @@ import numpy as np
 import scipy.special as sp
 from operator import mul
 from functools import reduce
+from sklearn.preprocessing import StandardScaler
+
+def load_IHDP_data(type_a=False, i=7):
+    if type_a == True:
+        path_data = "./IHDP"
+        data_train = np.loadtxt(path_data + '/ihdp_npci_train_' + str(i + 1) + '.csv', delimiter=',', skiprows=1)
+        data_test = np.loadtxt(path_data + '/ihdp_npci_test_' + str(i + 1) + '.csv', delimiter=',', skiprows=1)
+    else:
+        path_data = "./IHDP_b"
+        data_train = np.loadtxt(path_data + '/ihdp_npci_train_' + str(i + 1) + '.csv', delimiter=',', skiprows=1)
+        data_test = np.loadtxt(path_data + '/ihdp_npci_test_' + str(i + 1) + '.csv', delimiter=',', skiprows=1)
+
+    t_train, y_train = data_train[:, 0], data_train[:, 1][:, np.newaxis]
+    mu_0_train, mu_1_train, x_train = data_train[:, 3][:, np.newaxis], data_train[:, 4][:, np.newaxis], data_train[
+                                                                                                        :, 5:]
+
+    t_test, y_test = data_test[:, 0].astype('float32'), data_test[:, 1][:, np.newaxis].astype('float32')
+    mu_0_test, mu_1_test, x_test = data_test[:, 3][:, np.newaxis].astype('float32'), data_test[:, 4][:,
+                                                                                     np.newaxis].astype('float32'), \
+                                   data_test[:, 5:].astype('float32')
+
+    data_train = {'x': x_train, 't': t_train, 'y': y_train, 't': t_train, 'mu_0': mu_0_train, 'mu_1': mu_1_train}
+
+    data_train['t'] = data_train['t'].reshape(-1,
+                                              1)  # we're just padding one dimensional vectors with an additional dimension
+    data_train['y'] = data_train['y'].reshape(-1, 1)
+    # rescaling y between 0 and 1 often makes training of DL regressors easier
+    data_train['y_scaler'] = StandardScaler().fit(data_train['y'])
+    data_train['ys'] = data_train['y_scaler'].transform(data_train['y'])
+
+    data_test = {'x': x_test, 't': t_test, 'y': y_test, 't': t_test, 'mu_0': mu_0_test, 'mu_1': mu_1_test}
+    data_test['t'] = data_test['t'].reshape(-1,
+                                            1)  # we're just padding one dimensional vectors with an additional dimension
+    data_test['y'] = data_test['y'].reshape(-1, 1)
+    # rescaling y between 0 and 1 often makes training of DL regressors easier
+    data_test['y_scaler'] = StandardScaler().fit(data_test['y'])
+    data_test['ys'] = data_test['y_scaler'].transform(data_test['y'])
+
+    return data_train, data_test
 
 def covariance_AR1(p, rho):
     """
