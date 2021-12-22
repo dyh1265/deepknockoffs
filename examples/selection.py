@@ -38,3 +38,9 @@ def select(W, beta, nominal_fdr=0.1):
     FDP = FP / max(TP+FP,1.0)
     POW = TP / max(len(nonzero),1.0)
     return selected, FDP, POW
+
+
+def select_v(W,  nominal_fdr=0.1):
+    W_threshold = kfilter(W, q=nominal_fdr)
+    selected = np.where(W >= W_threshold)[0]
+    return selected
